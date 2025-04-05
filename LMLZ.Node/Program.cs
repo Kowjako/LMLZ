@@ -1,15 +1,27 @@
+using FluentMigrator.Runner;
+using LMLZ.Node.Extensions;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.ListenAnyIP(1338);
+});
 
+builder.ConfigureSerilog();
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddApplicationServices();
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Migrate database
+var scope = app.Services.CreateScope();
+var migrator = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
+migrator.MigrateUp();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -17,9 +29,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
