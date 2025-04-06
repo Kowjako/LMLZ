@@ -31,18 +31,22 @@ public class WalletService : IWalletService
 
         var wallet = new Wallet
         {
-            Address = "0x" + publicKey.ToUpper(),
+            Address = AddressGenerator.GenerateWalletAddress(publicKey),
             PublicKey = publicKey,
             PrivateKeyProtected = encryptedPrivateKey
         };
+
+        await _walletRepository.AddWalletAsync(wallet);
     }
 
     public async Task<IEnumerable<WalletDto>> GetWalletsAsync()
     {
         var wallets = await _walletRepository.GetWalletsAsync();
 
-        // calculate balances
+        // calculate balances - consider appropriate index on table
 
         return Enumerable.Empty<WalletDto>();
     }
+
+    // Import wallet?
 }
