@@ -55,17 +55,11 @@ public class WalletService : IWalletService
         }
         
         var decryptedPrivateKey = AesEncrypter.DecryptPrivateKey(wallet.PrivateKeyProtected, passphrase);
-        var sb = new StringBuilder();
-        sb.AppendLine("-----BEGIN RSA PRIVATE KEY-----");
-        for(var i = 0; i < decryptedPrivateKey.Length; i += 64)
-        {
-            sb.AppendLine(decryptedPrivateKey.Substring(i, Math.Min(64, decryptedPrivateKey.Length - i)));
-        }
-        sb.AppendLine("-----END RSA PRIVATE KEY-----");
+        
+        using var rsa = RSA.Create();
+        rsa.ImportRSAPrivateKey(decryptedPrivateKey, out _);
 
-        _logger.Information($"Exported wallet {walletName} with public key {wallet.PublicKey}");
-
-        return sb.ToString();
+        return rsa.ExportRSAPrivateKeyPem();
     }
 
     public async Task<IEnumerable<WalletDto>> GetWalletsAsync()
