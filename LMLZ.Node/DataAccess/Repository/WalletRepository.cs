@@ -9,6 +9,7 @@ public interface IWalletRepository
 {
     Task AddWalletAsync(Wallet wallet);
     Task<IEnumerable<Wallet>> GetWalletsAsync();
+    Task<Wallet?> GetWalletByNameAsync(string name);
 }
 
 public class WalletRepository : IWalletRepository
@@ -32,6 +33,15 @@ public class WalletRepository : IWalletRepository
         await conn.ExecuteAsync(cmd, wallet);
 
         _logger.Information($"Wallet with public key {wallet.PublicKey} created");
+    }
+
+    public Task<Wallet?> GetWalletByNameAsync(string name)
+    {
+        using var conn = new SqliteConnection(_configuration["ConnectionString"]);
+        return conn.QueryFirstOrDefaultAsync<Wallet>("SELECT * FROM Wallets WHERE Name = @Name", new 
+        {
+            Name = name 
+        });
     }
 
     public Task<IEnumerable<Wallet>> GetWalletsAsync()

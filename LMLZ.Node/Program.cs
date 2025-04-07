@@ -1,5 +1,6 @@
 using FluentMigrator.Runner;
 using LMLZ.Node.Extensions;
+using LMLZ.Node.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,8 @@ builder.Services.AddApplicationServices();
 builder.Services.AddDataAccessServices(builder.Configuration);
 
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // Migrate database
 var scope = app.Services.CreateScope();

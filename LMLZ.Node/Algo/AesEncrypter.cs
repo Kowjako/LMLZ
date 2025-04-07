@@ -5,7 +5,7 @@ namespace LMLZ.Node.Algo;
 
 public static class AesEncrypter
 {
-    public static string EncryptPrivateKey(string privateKey, string passphrase)
+    public static string EncryptPrivateKey(byte[] privateKeyPkcs1, string passphrase)
     {
         using var aesAlg = Aes.Create();
         var key = new Rfc2898DeriveBytes(passphrase, Encoding.UTF8.GetBytes("LMLZ"), 10000, HashAlgorithmName.SHA256);
@@ -13,8 +13,7 @@ public static class AesEncrypter
         aesAlg.IV = new byte[16];
 
         using var encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
-        var inputBytes = Encoding.UTF8.GetBytes(privateKey);
-        var encryptedBytes = encryptor.TransformFinalBlock(inputBytes, 0, inputBytes.Length);
+        var encryptedBytes = encryptor.TransformFinalBlock(privateKeyPkcs1, 0, privateKeyPkcs1.Length);
         return Convert.ToBase64String(encryptedBytes);
     }
 

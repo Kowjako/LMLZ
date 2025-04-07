@@ -10,7 +10,7 @@ public class Initialize : Migration
         Create.Table("Wallets")
               .WithColumn("Id").AsInt32().PrimaryKey().Identity()
               .WithColumn("Address").AsString(100).NotNullable()
-              .WithColumn("Name").AsString(100).NotNullable()
+              .WithColumn("Name").AsString(100).Unique().NotNullable()
               .WithColumn("PublicKey").AsString(100).NotNullable()
               .WithColumn("PrivateKeyProtected").AsString(100).NotNullable();
     }
