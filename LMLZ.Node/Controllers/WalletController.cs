@@ -38,4 +38,18 @@ public class WalletController : ControllerBase
         await _walletService.ImportWalletUsingPemAsync(dto);
         return Created();
     }
+
+    [HttpPatch("set/passphrase")]
+    public async Task<ActionResult> ChangePassphrase([FromBody] ChangeWalletPassphraseDto dto)
+    {
+        await _walletService.ChangePassphraseAsync(dto);
+        return NoContent();
+    }
+
+    [HttpPatch("set/name")]
+    public async Task<ActionResult> ChangeWalletName([FromBody] ChangeWalletNameDto dto)
+    {
+        await _walletService.ChangeWalletNameAsync(dto);
+        return NoContent();
+    }
 }

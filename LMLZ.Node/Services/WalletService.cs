@@ -11,6 +11,8 @@ namespace LMLZ.Node.Services;
 
 public interface IWalletService
 {
+    Task ChangeWalletNameAsync(ChangeWalletNameDto dto);
+    Task ChangePassphraseAsync(ChangeWalletPassphraseDto dto);
     Task CreateNewWalletAsync(string pass);
     Task<string> ExportWalletPemAsync(string wallet, string passphrase);
     Task<IEnumerable<WalletDto>> GetWalletsAsync();
@@ -25,6 +27,34 @@ public class WalletService : IWalletService
     public WalletService(IWalletRepository walletRepository)
     {
         _walletRepository = walletRepository;
+    }
+
+    public async Task ChangePassphraseAsync(ChangeWalletPassphraseDto dto)
+    {
+        var wallet = await _walletRepository.GetWalletByNameAsync(dto.WalletName);
+        if (wallet is null)
+        {
+            throw new NotFoundException($"Wallet {dto.WalletName} not found");
+        }
+
+        var encryptedPrivateKey = AesEncrypter.DecryptPrivateKey(wallet.PrivateKeyProtected, dto.OldPassphrase);
+        var newEncryptedPrivateKey = AesEncrypter.EncryptPrivateKey(
+            encryptedPrivateKey, dto.NewPassphrase);
+
+        await _walletRepository.SetPrivateProtectedKeyAsync(wallet.Id, newEncryptedPrivateKey);
+        _logger.Information($"Changed passphrase for wallet {dto.WalletName}");
+    }
+
+    public async Task ChangeWalletNameAsync(ChangeWalletNameDto dto)
+    {
+        var wallet = await _walletRepository.GetWalletByNameAsync(dto.WalletName);
+        if (wallet is null)
+        {
+            throw new NotFoundException($"Wallet {dto.WalletName} not found");
+        }
+
+        await _walletRepository.SetNameAsync(wallet.Id, dto.NewWalletName);
+        _logger.Information($"Changed wallet name from {dto.WalletName} to {dto.NewWalletName}");
     }
 
     public async Task CreateNewWalletAsync(string pass)
