@@ -24,10 +24,22 @@ public class Initialize : Migration
               .OnColumn("IP").Ascending()
               .OnColumn("Port").Ascending()
               .WithOptions().Unique();
+
+        Create.Table("Blocks")
+            .WithColumn("Index").AsInt64().PrimaryKey() // No Identity here, blockchain maintains order
+            .WithColumn("Hash").AsString().NotNullable()
+            .WithColumn("Transactions").AsString().NotNullable()
+            .WithColumn("Timestamp").AsDateTime().NotNullable()
+            .WithColumn("Nonce").AsInt32().NotNullable()
+            .WithColumn("MerkleRoot").AsString().NotNullable()
+            .WithColumn("PreviousHash").AsString().NotNullable()
+            .WithColumn("BlockSize").AsInt32().NotNullable()
+            .WithColumn("Version").AsString().NotNullable();
     }
 
     public override void Down()
     {
+        Delete.Table("Blocks");
         Delete.Index("IX__Peers_Ip_Port");
         Delete.Table("Peers");
         Delete.Table("Wallets");
