@@ -2,7 +2,7 @@
 
 public record Wallet
 {
-    public int Id { get; init; }
+    public int Id { get; init; } // only internal use
     public string Name { get; init; } = null!;
     public string Address { get; init; } = null!;
     public string PublicKey { get; init; } = null!;

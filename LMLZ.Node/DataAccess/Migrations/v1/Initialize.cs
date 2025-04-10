@@ -13,10 +13,23 @@ public class Initialize : Migration
               .WithColumn("Name").AsString(100).Unique().NotNullable()
               .WithColumn("PublicKey").AsString(100).NotNullable()
               .WithColumn("PrivateKeyProtected").AsString(100).NotNullable();
+
+        Create.Table("Peers")
+              .WithColumn("Id").AsInt32().PrimaryKey().Identity()
+              .WithColumn("IP").AsString(100).NotNullable()
+              .WithColumn("Port").AsInt32().NotNullable();
+
+        Create.Index("IX__Peers_Ip_Port")
+              .OnTable("Peers")
+              .OnColumn("IP").Ascending()
+              .OnColumn("Port").Ascending()
+              .WithOptions().Unique();
     }
 
     public override void Down()
     {
+        Delete.Index("IX__Peers_Ip_Port");
+        Delete.Table("Peers");
         Delete.Table("Wallets");
     }
 }
