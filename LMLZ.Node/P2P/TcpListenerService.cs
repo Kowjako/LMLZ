@@ -54,6 +54,9 @@ public class TcpListenerService : ITcpListenerService
     {
         try
         {
+            using var scope = _serviceScopeFactory.CreateScope();
+            var _messageProcessor = scope.ServiceProvider.GetRequiredService<MessageProcessor>();
+
             while (client is not null && client.Connected && client.GetStream().CanRead)
             {
                 var stream = client.GetStream();
@@ -70,9 +73,6 @@ public class TcpListenerService : ITcpListenerService
                 
                 var callerIp = client?.Client?.RemoteEndPoint as IPEndPoint;
                 var callerPeer = new Peer(0, callerIp!.Address.ToString(), port.GetInt32());
-
-                using var scope = _serviceScopeFactory.CreateScope();
-                var _messageProcessor = scope.ServiceProvider.GetRequiredService<MessageProcessor>();
 
                 await _messageProcessor.ProcessMessage(callerPeer, type.GetString()!, payload.GetString()!);
             }
