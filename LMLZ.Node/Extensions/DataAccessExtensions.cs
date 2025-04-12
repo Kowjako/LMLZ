@@ -13,6 +13,7 @@ public static class DataAccessExtensions
                                        .ScanIn(AppDomain.CurrentDomain.GetAssemblies()).For.Migrations());
 
         services.AddScoped<IWalletRepository, WalletRepository>();
+        services.AddScoped<IPeerCacheRepository, PeerCacheRepository>();
 
         return services;
     }
