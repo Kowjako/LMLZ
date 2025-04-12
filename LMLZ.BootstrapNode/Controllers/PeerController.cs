@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace LMLZ.BootstrapNode.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("api/v1/[controller]")]
 public class PeerController : ControllerBase
 {
     private readonly ILogger<PeerController> _logger;
