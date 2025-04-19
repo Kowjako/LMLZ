@@ -1,46 +1,69 @@
 ﻿using Dapper;
 using LMLZ.BootstrapNode.Model;
 using Microsoft.Data.Sqlite;
+using Serilog;
+using ILogger = Serilog.ILogger;
 
 namespace LMLZ.BootstrapNode.Repository;
 
 public interface IPeerRepository
 {
-	Task<IEnumerable<PeerDto>> GetPeersRandomChunkAsync(int maxCount);
-	Task RemovePeerAsync(Guid id);
-	Task<Guid> AddPeerAsync(string ip, string port);
+    Task<IEnumerable<PeerDto>> GetPeersRandomChunkAsync(int maxCount);
+    Task RemovePeerAsync(Guid id);
+    Task<Guid> AddPeerAsync(string ip, string port);
+    Task UpdateLastSeenAsync(Guid id);
+    Task RemoveDeadPeersBasedOnThreshold(DateTime thresholdTime);
 }
 
 public class PeerRepository : IPeerRepository
 {
-	private readonly ILogger<PeerRepository> _logger;
+    private readonly ILogger _logger = Log.ForContext<PeerRepository>();
     private readonly IConfiguration _configuration;
 
-	public PeerRepository(ILogger<PeerRepository> logger, IConfiguration configuration)
-	{
-		_logger = logger;
-        _configuration = configuration;
-	}
+    public PeerRepository(IConfiguration configuration)
+     => _configuration = configuration;
 
-    public Task<Guid> AddPeerAsync(string ip, string port)
+    public async Task<Guid> AddPeerAsync(string ip, string port)
     {
         using var conn = new SqliteConnection(_configuration["ConnectionString"]);
-        var cmd = "INSERT INTO Peers (IP, Port) VALUES (@ip, @port) RETURNING Id";
 
-        return conn.ExecuteScalarAsync<Guid>(cmd, new { ip, port });
+        var cmd = @"INSERT OR IGNORE INTO Peers (IP, Port) VALUES (@ip, @port);";
+        await conn.ExecuteAsync(cmd, new { ip, port });
+
+        var existingId = await conn.ExecuteScalarAsync<Guid>(
+            "SELECT Id FROM Peers WHERE IP = @ip AND Port = @port",
+            new { ip, port });
+
+        return existingId;
     }
 
-    public Task<IEnumerable<PeerDto>> GetPeersRandomChunkAsync(int maxCount)
+    public async Task<IEnumerable<PeerDto>> GetPeersRandomChunkAsync(int maxCount)
     {
         using var conn = new SqliteConnection(_configuration["ConnectionString"]);
-        return conn.QueryAsync<PeerDto>("SELECT * FROM Peers ORDER BY RANDOM() LIMIT @Count", new { Count = maxCount });
+        return await conn.QueryAsync<PeerDto>("SELECT * FROM Peers ORDER BY RANDOM() LIMIT @Count", new { Count = maxCount });
     }
 
-    public Task RemovePeerAsync(Guid id)
+    public async Task RemoveDeadPeersBasedOnThreshold(DateTime thresholdTime)
+    {
+        using var conn = new SqliteConnection(_configuration["ConnectionString"]);
+        await conn.ExecuteAsync("DELETE FROM Peers WHERE LastSeen < @thresholdTime", new { thresholdTime });
+    }
+
+    public async Task RemovePeerAsync(Guid id)
     {
         using var conn = new SqliteConnection(_configuration["ConnectionString"]);
         var cmd = "DELETE FROM Peers WHERE Id = @id";
 
-        return conn.ExecuteAsync(cmd, new { id });
+        await conn.ExecuteAsync(cmd, new { id });
+    }
+
+    public async Task UpdateLastSeenAsync(Guid id)
+    {
+        _logger.Information($"Updating last seen for peer {id}");
+
+        using var conn = new SqliteConnection(_configuration["ConnectionString"]);
+        var cmd = @"UPDATE Peers SET LastSeen = @LastSeen WHERE Id = @peerId";
+
+        await conn.ExecuteAsync(cmd, new { id, LastSeen = DateTime.UtcNow });
     }
 }
