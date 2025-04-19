@@ -26,15 +26,26 @@ public class PeerRepository : IPeerRepository
     public async Task<Guid> AddPeerAsync(string ip, string port)
     {
         using var conn = new SqliteConnection(_configuration["ConnectionString"]);
+        using var tran = await conn.BeginTransactionAsync();
 
-        var cmd = @"INSERT OR IGNORE INTO Peers (Id, IP, Port) VALUES (@id, @ip, @port);";
-        await conn.ExecuteAsync(cmd, new { id = Guid.NewGuid(), ip, port });
+        try
+        {
+            var cmd = @"INSERT OR IGNORE INTO Peers (Id, IP, Port) VALUES (@id, @ip, @port);";
+            await conn.ExecuteAsync(cmd, new { id = Guid.NewGuid(), ip, port });
 
-        var existingId = await conn.ExecuteScalarAsync<string>(
-            "SELECT Id FROM Peers WHERE IP = @ip AND Port = @port",
-            new { ip, port });
+            var existingId = await conn.ExecuteScalarAsync<string>(
+                "SELECT Id FROM Peers WHERE IP = @ip AND Port = @port",
+                new { ip, port });
 
-        return Guid.Parse(existingId!);
+            await tran.CommitAsync();
+
+            return Guid.Parse(existingId!);
+        }
+        catch
+        {
+            await tran.RollbackAsync();
+            throw;
+        }
     }
 
     public async Task<IEnumerable<PeerDto>> GetPeersRandomChunkAsync(int maxCount)
