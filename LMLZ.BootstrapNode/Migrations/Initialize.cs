@@ -8,7 +8,7 @@ public class Initialize : Migration
     public override void Up()
     {
         Create.Table("Peers")
-            .WithColumn("Id").AsGuid().PrimaryKey().NotNullable().WithDefaultValue("lower(hex(randomblob(16)))")
+            .WithColumn("Id").AsGuid().PrimaryKey().NotNullable()
             .WithColumn("IP").AsString(45).NotNullable()
             .WithColumn("Port").AsInt32().NotNullable()
             .WithColumn("LastSeen").AsDateTime().NotNullable().WithDefault(SystemMethods.CurrentUTCDateTime);

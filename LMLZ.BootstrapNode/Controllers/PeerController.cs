@@ -23,7 +23,7 @@ public class PeerController : ControllerBase
     [HttpPost("register")]
     public async Task<ActionResult<Guid>> RegsiterPeer([FromQuery] string port)
     {
-        if (HttpContext.Connection.RemoteIpAddress is null) // Ensure TCP call
+        if (HttpContext.Connection.RemoteIpAddress is null)
         {
            _logger.Warning("Remote IP address is null");
             return BadRequest("Remote IP address is null");

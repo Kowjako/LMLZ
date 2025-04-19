@@ -1,5 +1,6 @@
 using FluentMigrator.Runner;
 using LMLZ.BootstrapNode.Jobs;
+using LMLZ.BootstrapNode.Middleware;
 using LMLZ.BootstrapNode.Repository;
 using Serilog;
 
@@ -23,10 +24,13 @@ builder.Services.AddFluentMigratorCore()
                                        .WithGlobalConnectionString(builder.Configuration["ConnectionString"])
                                        .ScanIn(AppDomain.CurrentDomain.GetAssemblies()).For.Migrations());
 
+builder.Services.AddScoped<ExceptionHandlingMiddleware>();
 builder.Services.AddScoped<IPeerRepository, PeerRepository>();
 builder.Services.AddHostedService<DeadPeerCleanerJob>();
 
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
@@ -40,4 +44,4 @@ var migrator = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
 migrator.MigrateUp();
 
 app.MapControllers();
-app.Run();
+await app.RunAsync();
